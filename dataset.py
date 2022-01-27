@@ -6,26 +6,41 @@ import json
 import random
 
 class SegmentsIBIDataset(Dataset):
-    def __init__(self, data_path, final_seg_len=120, augmentation=True) -> None:
+    def __init__(self, data_path, train=True, final_seg_len=120, augmentation=True) -> None:
         super().__init__()
         self.augmentation = augmentation
         self.pos_data = []
         self.neg_data = []
         self.final_seg_len = final_seg_len
+        self.mode = 'train' if train else 'val'
+        data_path = osp.join(data_path, self.mode)
         for i, record_id in enumerate(os.listdir(data_path)):
             with open(osp.join(data_path, record_id), 'r') as f:
                 data_json = json.load(f)
                 [self.pos_data.append(item) for item in data_json['pos_segments']]
                 [self.neg_data.append((item)) for item in data_json['neg_segments']]
 
-        self.number_of_pos_augmentations = 0
-        for item in self.pos_data:
-            self.number_of_pos_augmentations += min(len(item) - self.final_seg_len, [item[1] for item in item].count('sleep'))
-        print(f'Total number of pos segments {len(self.pos_data)}')
-        print(f'Total number of neg segments {len(self.neg_data)}')
+        print(f'Total number of {self.mode} pos segments {len(self.pos_data)}')
+        print(f'Total number of {self.mode} neg segments {len(self.neg_data)}')
         self.data = [(item, True) for item in self.pos_data] + [(item , False) for item in self.neg_data]
         random.shuffle(self.data)
-        print(f'Total number of pos augmentations {self.number_of_pos_augmentations}')
+        print(f'Total number of {self.mode} pos/neg augmentations {self.count_number_of_all_augments()}')
+
+    def count_number_of_all_augments(self):
+        number_of_pos_augments = 0
+        number_of_neg_augments = 0
+        for item in self.pos_data:
+            number_of_pos_augments += self.count_number_of_pos_aug(item)
+        for item in self.neg_data:
+            number_of_neg_augments += self.count_number_of_neg_aug(item)
+    
+        return number_of_pos_augments, number_of_neg_augments
+
+    def count_number_of_pos_aug(self, seg):
+        return min(len(seg) - self.final_seg_len, [item[1] for item in seg].count('sleep'))
+
+    def count_number_of_neg_aug(self, seg):
+        return len(seg) - self.final_seg_len
 
     def _random_sleep_augment(self, seg):
         numb = random.randint(0, min(len(seg) - self.final_seg_len, [item[1] for item in seg].count('sleep')))

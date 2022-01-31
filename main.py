@@ -1,14 +1,12 @@
-import functools
 import torch
 from dataset import SegmentsIBIDataset, SegmentsIBIContrastiveDataset
 from torch.utils.data import DataLoader
 from torch.optim import Adam
-from functools import reduce
 from argparse import ArgumentParser
 
 from utils import AverageMeter
-from models.rnn import RNN
 from models.two_rnn_model import SequencedLSTMs
+from models.siamese_framework import SiameseNetwork
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter('tb_logs')
 
@@ -32,12 +30,13 @@ def main(data_path):
     lr = 1e-3
     seg_len = 120
     train_dataloader = DataLoader(SegmentsIBIContrastiveDataset(data_path, train=True, final_seg_len=seg_len, augmentation=False), batch_size)
-    batch = next(iter(train_dataloader))
+    val_dataloader = DataLoader(SegmentsIBIContrastiveDataset(data_path, train=False, final_seg_len=seg_len, augmentation=False), batch_size)
 
-    train_dataloader = DataLoader(SegmentsIBIDataset(data_path, train=True, final_seg_len=seg_len, augmentation=False), batch_size)
-    val_dataloader = DataLoader(SegmentsIBIDataset(data_path, train=False, final_seg_len=seg_len, augmentation=False), batch_size)
+    # train_dataloader = DataLoader(SegmentsIBIDataset(data_path, train=True, final_seg_len=seg_len, augmentation=False), batch_size)
+    # val_dataloader = DataLoader(SegmentsIBIDataset(data_path, train=False, final_seg_len=seg_len, augmentation=False), batch_size)
     #model = RNN(hidden_size=hidden_size)
     model = SequencedLSTMs((64, 16))
+    model = SiameseNetwork(model)
 
     print(f'Model parameters {sum([p.numel() for p in (model.parameters())])}')
     optimizer = Adam(model.parameters(), lr=lr, weight_decay=1e-04)
@@ -57,18 +56,16 @@ def train_epoch(model, optimizer, train_dataloader, criterion):
     acc_meter = AverageMeter()
     loss_meter = AverageMeter()
     for iter, (input_, target) in enumerate(train_dataloader):
-        pred = model(torch.unsqueeze(input_, 2))
-        loss = criterion(pred, target.squeeze())
-        acc = compute_acc(pred, target.squeeze())
-        acc_meter.update(float(acc))
-        loss_meter.update(float(loss))
+        loss, outputs = model(input_, target)
+        # loss = criterion(pred, target.squeeze())
+        # acc = compute_acc(pred, target.squeeze())
+        # acc_meter.update(float(acc))
+        # loss_meter.update(float(loss))
         
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.1)
         optimizer.step()
-        #if iter % print_step == 0:
-        #    print(f'Iter {iter}: loss {loss} acc {acc}')
     return acc_meter.avg, loss_meter.avg
 
 def val(model, val_dataloader, criterion):
@@ -85,5 +82,4 @@ def val(model, val_dataloader, criterion):
 if __name__ == '__main__':
     parser = get_argument_parser()
     args = parser.parse_args()
-    #main(args.data)
-    main('records_corrected_2')
+    main(args.data)

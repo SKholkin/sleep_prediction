@@ -119,10 +119,6 @@ class SegmentsIBIContrastiveDataset(SegmentsIBIDataset):
         second_elem =  record_data[random.randint(0, len(record_data) - 1)]
         first_aug_fn = self._get_augment_fn(first_elem)
         second_aug_fn = self._get_augment_fn(second_elem)
-        # first_seq = torch.Tensor(first_aug_fn(first_elem[0]))
-        # first_label = torch.FloatTensor([first_elem[1]])
-        # second_seq = torch.Tensor(second_aug_fn(second_elem[0]))
-        # second_label = torch.FloatTensor([second_elem[1]])
         x = torch.cat((torch.Tensor((first_aug_fn(first_elem[0]))).unsqueeze(0), torch.Tensor(second_aug_fn(second_elem[0])).unsqueeze(0)), 0)
         label = torch.cat((torch.FloatTensor([first_elem[1]]), torch.FloatTensor([second_elem[1]])), 0)
         return  x, label

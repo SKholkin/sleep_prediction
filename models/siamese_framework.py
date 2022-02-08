@@ -15,6 +15,6 @@ class SiameseNetwork(nn.Module):
         x1 = self.core_network(input_1.unsqueeze(2))
         x2 = self.core_network(input_2.unsqueeze(2))
         target = torch.abs(target[:, 0] - target[:, 1])
-        loss = self.criterion(target, torch.abs(x1 - x2))
-        print(loss)
+        #loss = self.criterion(target, torch.abs(x1 - x2))
+        loss = sum(torch.abs(target - torch.abs(x1 - x2))) / target.size(0)
         return loss, (x1, x2)

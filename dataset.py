@@ -121,4 +121,4 @@ class SegmentsIBIContrastiveDataset(SegmentsIBIDataset):
         second_aug_fn = self._get_augment_fn(second_elem)
         x = torch.cat((torch.Tensor((first_aug_fn(first_elem[0]))).unsqueeze(0), torch.Tensor(second_aug_fn(second_elem[0])).unsqueeze(0)), 0)
         label = torch.cat((torch.FloatTensor([first_elem[1]]), torch.FloatTensor([second_elem[1]])), 0)
-        return  x, label
+        return x, label

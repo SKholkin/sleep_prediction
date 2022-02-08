@@ -94,10 +94,16 @@ class SegmentsIBIContrastiveDataset(SegmentsIBIDataset):
                 data_json = json.load(f)
                 data = [(item, 1) for item in data_json['pos_segments']]
                 data += [(item, 0) for item in data_json['neg_segments']]
-                self.record_data[int(record_id)] = [(item, 1) for item in data_json['pos_segments']]
-                self.record_data[int(record_id)] += [(item, 0) for item in data_json['neg_segments']]
-                self.data += [(item[0], item[1], int(record_id)) for item in self.record_data[int(record_id)]]
-        
+                if len([(item, 1) for item in data_json['pos_segments']]) + len([(item, 0) for item in data_json['neg_segments']]) > 3:
+                    self.record_data[int(record_id)] = [(item, 1) for item in data_json['pos_segments']]
+                    self.record_data[int(record_id)] += [(item, 0) for item in data_json['neg_segments']]
+                    self.data += [(item[0], item[1], int(record_id)) for item in self.record_data[int(record_id)]]
+
+        for key, value in list(self.record_data.items()):
+            if len(value) < 3:
+                print('DELETE')
+                del self.record_data[key]
+
         print(f'Total number of {self.mode} pos segments {len(self.pos_data)}')
         print(f'Total number of {self.mode} neg segments {len(self.neg_data)}')
         #self.data = [(item, True) for item in self.pos_data] + [(item , False) for item in self.neg_data]
@@ -113,7 +119,6 @@ class SegmentsIBIContrastiveDataset(SegmentsIBIDataset):
 
     def __getitem__(self, idx):
         # return [2, N], [2]
-        self.data[idx]
         record_data = self.record_data[self.data[idx][2]]
         first_elem = self.data[idx]
         second_elem =  record_data[random.randint(0, len(record_data) - 1)]

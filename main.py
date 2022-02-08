@@ -27,22 +27,20 @@ def compute_siamese_acc(x1, x2, target):
 def main(data_path):
     batch_size = 128
     num_epochs = 1000
-    hidden_size = 64
+    hidden_size = 32
     print_step = 100
     test_freq= 5
-    lr = 1e-2
+    lr = 1e-3
     seg_len = 120
-    train_dataloader = DataLoader(SegmentsIBIContrastiveDataset(data_path, train=True, final_seg_len=seg_len, augmentation=False), batch_size)
-    val_dataloader = DataLoader(SegmentsIBIContrastiveDataset(data_path, train=False, final_seg_len=seg_len, augmentation=False), batch_size)
+    train_dataloader = DataLoader(SegmentsIBIContrastiveDataset(data_path, train=True, final_seg_len=seg_len, augmentation=True), batch_size)
+    val_dataloader = DataLoader(SegmentsIBIContrastiveDataset(data_path, train=False, final_seg_len=seg_len, augmentation=True), batch_size)
 
-    # train_dataloader = DataLoader(SegmentsIBIDataset(data_path, train=True, final_seg_len=seg_len, augmentation=False), batch_size)
-    # val_dataloader = DataLoader(SegmentsIBIDataset(data_path, train=False, final_seg_len=seg_len, augmentation=False), batch_size)
-    model = RNN(hidden_size=hidden_size)
-    #model = SequencedLSTMs((64, 16))
-    model = SiameseNetwork(model)
+    model = RNN(hidden_size=hidden_size, classifier_output=False)
+    model = SequencedLSTMs((64, 16), classifier_output=False)
+    model = SiameseNetwork(model, classifier_output=True)
 
     print(f'Model parameters {sum([p.numel() for p in (model.parameters())])}')
-    optimizer = Adam(model.parameters(), lr=lr, weight_decay=1e-08)
+    optimizer = Adam(model.parameters(), lr=lr)
     criterion = torch.nn.BCELoss()
 
     for epoch in range(num_epochs):
@@ -62,16 +60,22 @@ def train_epoch(model, optimizer, train_dataloader, criterion):
     loss_meter = AverageMeter()
     for iter, (input_, target) in enumerate(train_dataloader):
         loss, outputs = model(input_, target)
-        # print(outputs)
-        # print(f'output var {torch.std(outputs[0], dim=0)} {torch.std(outputs[1], dim=0)}')
-        acc = compute_siamese_acc(*outputs, torch.abs(target[:, 0] - target[:, 1]))
-        # loss = criterion(pred, target.squeeze())
-        # acc = compute_acc(pred, target.squeeze())
+        acc = compute_acc(outputs, torch.abs(target[:, 0] - target[:, 1]).squeeze())
+
         loss_meter.update(float(loss))
         acc_meter.update(float(acc))
         optimizer.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.1)
+
+        # print(torch.std(outputs))
+        # total_norm = 0
+        # for p in model.parameters():
+        #     param_norm = p.grad.detach().data.norm(2)
+        #     # print(torch.mean(p.grad.detach()))
+        #     total_norm += param_norm.item() ** 2
+        # total_norm = total_norm ** 0.5
+        # print(f'Grad norm {total_norm}')
+
         optimizer.step()
     return acc_meter.avg, loss_meter.avg
 
@@ -80,9 +84,9 @@ def val(model, val_dataloader, criterion):
     loss_meter = AverageMeter()
     for iter, (input_, target) in enumerate(val_dataloader):
         loss, outputs = model(input_, target)
-        acc = compute_siamese_acc(*outputs, torch.abs(target[:, 0] - target[:, 1]))
+        # acc = compute_siamese_acc(*outputs, torch.abs(target[:, 0] - target[:, 1]))
         # loss = criterion(pred, target.squeeze())
-        # acc = compute_acc(pred, target.squeeze())
+        acc = compute_acc(outputs, torch.abs(target[:, 0] - target[:, 1]).squeeze())
         # acc_meter.update(float(acc))
         loss_meter.update(float(loss))
         acc_meter.update(float(acc))

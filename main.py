@@ -67,15 +67,6 @@ def train_epoch(model, optimizer, train_dataloader, criterion):
         optimizer.zero_grad()
         loss.backward()
 
-        # print(torch.std(outputs))
-        # total_norm = 0
-        # for p in model.parameters():
-        #     param_norm = p.grad.detach().data.norm(2)
-        #     # print(torch.mean(p.grad.detach()))
-        #     total_norm += param_norm.item() ** 2
-        # total_norm = total_norm ** 0.5
-        # print(f'Grad norm {total_norm}')
-
         optimizer.step()
     return acc_meter.avg, loss_meter.avg
 

@@ -33,4 +33,5 @@ class SequencedLSTMs(nn.Module):
             lstm_2_output_seq.append(out)
         if self.classifier_output:
             return self.classifier(h_n_lstm_2).squeeze()
+        return torch.mean(torch.cat(lstm_2_output_seq, dim=0), dim=0)
         return h_n_lstm_2.squeeze()

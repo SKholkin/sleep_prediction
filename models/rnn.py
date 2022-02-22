@@ -27,8 +27,13 @@ class RNN(nn.Module):
         x = self.preprocess_mlp(x)
         x = self.cls_conv(x.permute([0, 2, 1])).permute([2, 1, 0])
         h_n, c_n = torch.empty(self.hidden_size, batch_size).normal_(0, math.sqrt(self.hidden_size)), torch.zeros(self.hidden_size, batch_size)
+        
+        lstm_1_output_seq = []
         for i in range(x.size(0)):
             out, (h_n, c_n) = self.lstm(x[i, :, :].squeeze(), (h_n, c_n))
+            lstm_1_output_seq.append(out)
+
         if self.classifier_output:
             return self.classifier(h_n).squeeze()
+        return torch.mean(torch.cat(lstm_1_output_seq, dim=0), dim=0)
         return h_n.squeeze()

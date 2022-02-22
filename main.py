@@ -36,7 +36,7 @@ def main(data_path):
     val_dataloader = DataLoader(SegmentsIBIContrastiveDataset(data_path, train=False, final_seg_len=seg_len, augmentation=True), batch_size)
 
     model = RNN(hidden_size=hidden_size, classifier_output=False)
-    model = SequencedLSTMs((64, 16), classifier_output=False)
+    #model = SequencedLSTMs((64, 16), classifier_output=False)
     model = SiameseNetwork(model, classifier_output=True)
 
     print(f'Model parameters {sum([p.numel() for p in (model.parameters())])}')

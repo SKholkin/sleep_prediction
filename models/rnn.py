@@ -1,4 +1,3 @@
-from tkinter import X
 from torch import nn
 import torch
 from torch.nn.modules.activation import ReLU
@@ -35,5 +34,9 @@ class RNN(nn.Module):
 
         if self.classifier_output:
             return self.classifier(h_n).squeeze()
+<<<<<<< HEAD
         return torch.mean(torch.cat(lstm_1_output_seq, dim=0), dim=0)
         return h_n.squeeze()
+=======
+        return h_n.squeeze()
+>>>>>>> fb5f111edc5686d5b1c8f7dcbd66775a9d85ea87

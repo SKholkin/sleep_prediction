@@ -9,7 +9,6 @@ class SiameseNetwork(nn.Module):
         if self.classifier_output:
             self.classifier = nn.Sequential(nn.Linear(in_features=self.core_network.output_dim, out_features=1), nn.Sigmoid())
             self.criterion = nn.BCELoss()
-            self.criterion_mse = nn.MSELoss()
         else:
             self.criterion = nn.MSELoss()
 
@@ -22,10 +21,7 @@ class SiameseNetwork(nn.Module):
         x2 = self.core_network(input_2.unsqueeze(2))
         if self.classifier_output:
             x = torch.cat([x1, x2], dim=1)
-            x = self.classifier(x1 - x2).squeeze()
-            # print(torch.abs(target[:, 0] - target[:, 1]))
-            # print(-(2 * torch.abs(target[:, 0] - target[:, 1]) - 1))
-            # loss = torch.mean(torch.abs(target[:, 0] - target[:, 1]) * self.criterion_mse(x1, x2))
+            x = self.classifier(x1 + x2).squeeze()
             loss = self.criterion(x, torch.abs(target[:, 0] - target[:, 1]).squeeze())
             return loss, x
         loss = self.criterion(torch.abs(target[:, 0] - target[:, 1]), torch.abs(x1 - x2))

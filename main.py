@@ -25,7 +25,7 @@ def compute_siamese_acc(x1, x2, target):
     return sum(torch.eq(torch.abs(x1 - x2).round(), target)) / target.size(0)
 
 def main(data_path):
-    batch_size = 128
+    batch_size = 32
     num_epochs = 1000
     hidden_size = 32
     print_step = 100
@@ -34,6 +34,8 @@ def main(data_path):
     seg_len = 120
     train_dataloader = DataLoader(SegmentsIBIContrastiveDataset(data_path, train=True, final_seg_len=seg_len, augmentation=True), batch_size)
     val_dataloader = DataLoader(SegmentsIBIContrastiveDataset(data_path, train=False, final_seg_len=seg_len, augmentation=True), batch_size)
+    print(f'Train len {len(list(train_dataloader))}')
+    print(f'Val len {len(val_dataloader)}')
 
     model = RNN(hidden_size=hidden_size, classifier_output=False)
     model = SequencedLSTMs((64, 16), classifier_output=False)

@@ -31,6 +31,10 @@ class SequencedLSTMs(nn.Module):
         for i in range(x.size(0)):
             out, (h_n_lstm_2, c_n_lstm_2) = self.lstm_2(x[i, :, :], (h_n_lstm_2, c_n_lstm_2))
             lstm_2_output_seq.append(out)
+
+        lstm_2_output_seq = torch.cat(lstm_2_output_seq, dim=0).permute([0, 2, 1])
+        sum_of_all_representations = torch.sum(lstm_2_output_seq, dim=0).permute([1, 0])
+
         if self.classifier_output:
-            return self.classifier(h_n_lstm_2).squeeze()
-        return h_n_lstm_2.squeeze()
+            return self.classifier(sum_of_all_representations).squeeze()
+        return sum_of_all_representations.squeeze()

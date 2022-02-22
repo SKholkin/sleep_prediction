@@ -1,4 +1,3 @@
-from tkinter import X
 from torch import nn
 import torch
 from torch.nn.modules.activation import ReLU
